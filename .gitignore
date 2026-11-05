@@ -3,3 +3,6 @@ node_modules/
 reports/
 semgrep-before.txt
 semgrep-before.txt
+reports-npm-before.txt
+trivy-*.txt
+trivy-db.log
