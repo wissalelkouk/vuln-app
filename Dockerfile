@@ -5,4 +5,5 @@ COPY . .
 RUN npm install
 ENV DB_PASSWORD=SuperSecret-Lab-2026!
 EXPOSE 3000
+USER node
 CMD ["npm", "start"]

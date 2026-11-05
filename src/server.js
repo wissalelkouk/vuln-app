@@ -29,7 +29,7 @@ app.get("/ping", (req, res) => {
 
 // [VULN] XSS réfléchi : l'entrée est renvoyée dans du HTML sans échappement.
 app.get("/hello", (req, res) => {
-  res.send("<h1>Bonjour " + req.query.name + "</h1>");
+  res.json({ message: `Bonjour ${req.query.name}` });
 });
 
 // [VULN] Prototype pollution via une version vulnérable de lodash (merge récursif d'un objet client).
@@ -40,7 +40,7 @@ app.post("/settings", (req, res) => {
 
 // [VULN] Jeton signé avec un secret codé en dur, sans expiration.
 app.post("/login", (req, res) => {
-  const token = jwt.sign({ user: req.body.user, role: "user" }, config.jwt_secret);
+  const token = jwt.sign({ user: req.body.user, role: "user" }, config.jwt_secret, { expiresIn: "1h" });
   res.json({ token });
 });
 
