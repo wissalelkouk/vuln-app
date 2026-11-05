@@ -1,7 +1,7 @@
 // ⚠️ TP10 : application VOLONTAIREMENT vulnérable. Ne jamais l'exposer hors du lab.
 // Chaque bloc marqué [VULN] doit être détecté par un outil puis corrigé.
 const express = require("express");
-const { exec } = require("child_process");
+const { execFile } = require("child_process");
 const sqlite3 = require("sqlite3");
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
@@ -18,13 +18,17 @@ db.serialize(() => {
 
 // [VULN] Injection SQL : la valeur de l'utilisateur est concaténée dans la requête.
 app.get("/users", (req, res) => {
-  const sql = "SELECT id, name FROM users WHERE name = '" + req.query.name + "'";
-  db.all(sql, (err, rows) => (err ? res.status(500).send(err.message) : res.json(rows)));
+  const sql = "SELECT id, name FROM users WHERE name = ?";
+  db.all(sql, [req.query.name], (err, rows) => (err ? res.status(500).send("Erreur serveur") : res.json(rows)));
 });
 
 // [VULN] Injection de commande : l'entrée est passée à un shell.
 app.get("/ping", (req, res) => {
-  exec("ping -c 1 " + req.query.host, (err, stdout) => res.type("text").send(stdout || String(err)));
+  const host = String(req.query.host || "");
+  if (!/^[A-Za-z0-9.-]{1,253}$/.test(host) || host.startsWith("-")) {
+    return res.status(400).send("host invalide");
+  }
+  execFile("ping", ["-c", "1", host], (err, stdout) => res.type("text").send(stdout || String(err)));
 });
 
 // [VULN] XSS réfléchi : l'entrée est renvoyée dans du HTML sans échappement.
