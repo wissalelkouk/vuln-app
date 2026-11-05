@@ -9,11 +9,7 @@ const config = require("./config");
 
 const app = express();
 app.use(express.json());
-const rateLimit = require("express-rate-limit");
-app.use(rateLimit({ windowMs: 60 * 1000, limit: 60 }));
 
-const rateLimit = require("express-rate-limit");
-app.use(rateLimit({ windowMs: 60 * 1000, limit: 60 }));
 const db = new sqlite3.Database(":memory:");
 db.serialize(() => {
   db.run("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, role TEXT)");
@@ -33,7 +29,7 @@ app.get("/ping", (req, res) => {
 
 // [VULN] XSS réfléchi : l'entrée est renvoyée dans du HTML sans échappement.
 app.get("/hello", (req, res) => {
-  res.json({ message: `Bonjour ${req.query.name}` });
+  res.send("<h1>Bonjour " + req.query.name + "</h1>");
 });
 
 // [VULN] Prototype pollution via une version vulnérable de lodash (merge récursif d'un objet client).
@@ -44,7 +40,7 @@ app.post("/settings", (req, res) => {
 
 // [VULN] Jeton signé avec un secret codé en dur, sans expiration.
 app.post("/login", (req, res) => {
-  const token = jwt.sign({ user: req.body.user, role: "user" }, config.jwt_secret, { expiresIn: "1h" });
+  const token = jwt.sign({ user: req.body.user, role: "user" }, config.jwt_secret);
   res.json({ token });
 });
 
