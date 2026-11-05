@@ -9,7 +9,11 @@ const config = require("./config");
 
 const app = express();
 app.use(express.json());
+const rateLimit = require("express-rate-limit");
+app.use(rateLimit({ windowMs: 60 * 1000, limit: 60 }));
 
+const rateLimit = require("express-rate-limit");
+app.use(rateLimit({ windowMs: 60 * 1000, limit: 60 }));
 const db = new sqlite3.Database(":memory:");
 db.serialize(() => {
   db.run("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, role TEXT)");

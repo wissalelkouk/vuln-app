@@ -1,4 +1,3 @@
-# TP10 partie 5 : workflow de sécurité à compléter.
 name: security
 
 on:
@@ -6,37 +5,63 @@ on:
   push:
     branches: [main]
 
-# TODO : permissions minimales au niveau du workflow (contents: read)
-#        puis security-events: write uniquement pour les jobs qui publient du SARIF
+# Permissions minimales par défaut
+permissions:
+  contents: read
 
 jobs:
   secrets:
     runs-on: ubuntu-latest
     steps:
-      # TODO : épingler chaque Action tierce par SHA de commit complet, avec la version en commentaire
-      #        ex. uses: actions/checkout@<sha40> # v7.0.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          fetch-depth: 0 # historique complet : Gitleaks analyse tous les commits
-      # TODO : lancer Gitleaks (image ghcr.io/gitleaks/gitleaks ou action gitleaks/gitleaks-action)
+          fetch-depth: 0 # historique complet pour Gitleaks
+      - name: Gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest \
+            git /repo --verbose --redact
 
   sast:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # uniquement pour publier le SARIF
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      # TODO : Semgrep (conteneur semgrep/semgrep) avec --config p/javascript --config p/owasp-top-ten
-      #        --error pour faire échouer le job, --sarif pour publier dans l'onglet Security
+      - name: Semgrep
+        run: |
+          docker run --rm -v "$PWD:/src" semgrep/semgrep \
+            semgrep scan --config p/javascript --config p/owasp-top-ten \
+            --metrics=off --error --sarif --output /src/semgrep.sarif /src
+      - name: Upload SARIF
+        if: always() && hashFiles('semgrep.sarif') != ''
+        uses: github/codeql-action/upload-sarif@f3bbb05694c2f74569081c28664c0866d64dec21 # v4.39.3
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
 
   dependencies:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      # TODO : npm ci puis npm audit --audit-level=high
+      - name: npm ci + npm audit
+        run: |
+          docker run --rm -v "$PWD:/app" -w /app node:24-alpine \
+            sh -c "npm ci && npm audit --audit-level=high"
 
   image:
     runs-on: ubuntu-latest
     needs: [secrets, sast, dependencies]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      # TODO : docker build puis Trivy image --severity CRITICAL --exit-code 1 --ignore-unfixed
-      # TODO : Trivy config sur le Dockerfile
+      - name: Build
+        run: docker build -t vuln-app:ci .
+      - name: Trivy image
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image --severity CRITICAL --exit-code 1 \
+            --ignore-unfixed vuln-app:ci
+      - name: Trivy config
+        run: |
+          docker run --rm -v "$PWD:/src" aquasec/trivy:latest \
+            config --severity HIGH,CRITICAL --exit-code 1 /src
