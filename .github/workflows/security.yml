@@ -59,7 +59,7 @@ jobs:
       - name: Trivy image
         run: |
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy:latest image --severity CRITICAL --exit-code 1 \
+            aquasec/trivy:latest image --severity CRITICAL --exit-code 1 --scanners vuln --no-progress \
             --ignore-unfixed vuln-app:ci
       - name: Trivy config
         run: |

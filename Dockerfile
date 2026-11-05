@@ -1,9 +1,14 @@
-# ⚠️ TP10 : Dockerfile VOLONTAIREMENT mal configuré (à analyser avec trivy config puis corriger).
-FROM node:14
+FROM node:24-alpine AS build
 WORKDIR /app
-COPY . .
-RUN npm install
-ENV DB_PASSWORD=SuperSecret-Lab-2026!
-EXPOSE 3000
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+FROM node:24-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/node_modules ./node_modules
+COPY package.json ./
+COPY src ./src
 USER node
-CMD ["npm", "start"]
+EXPOSE 3000
+CMD ["node", "src/server.js"]
