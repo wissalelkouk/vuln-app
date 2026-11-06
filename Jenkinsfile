@@ -34,7 +34,7 @@ pipeline {
           steps {
             sh '''
               docker run --rm -v "$PWD:/src" semgrep/semgrep \
-                semgrep scan --config p/javascript --config p/owasp-top-ten \
+                semgrep scan --config p/javascript --config p/owasp-top-ten --config .semgrep/no-log-body.yml \
                 --metrics=off --error --json --output /src/reports/semgrep.json /src
             '''
           }
