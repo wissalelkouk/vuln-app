@@ -31,7 +31,7 @@ jobs:
       - name: Semgrep
         run: |
           docker run --rm -v "$PWD:/src" semgrep/semgrep \
-            semgrep scan --config p/javascript --config p/owasp-top-ten \
+            semgrep scan --config p/javascript --config p/owasp-top-ten --config .semgrep/no-log-body.yml \
             --metrics=off --error --sarif --output /src/semgrep.sarif /src
       - name: Upload SARIF
         if: always() && hashFiles('semgrep.sarif') != ''

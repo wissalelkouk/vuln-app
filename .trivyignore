@@ -1,0 +1,4 @@
+# EXEMPLE pédagogique : remplacer par une vraie CVE sans correctif.
+# Justification : aucun correctif publié, composant non exposé en production.
+# Risque accepté par : Wissal, revue avant le 2027-01-31.
+CVE-2099-0001 exp:2027-01-31

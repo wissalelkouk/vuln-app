@@ -1,0 +1,8 @@
+rules:
+  - id: no-console-log-req-body
+    languages: [javascript]
+    severity: ERROR
+    message: "Ne pas journaliser req.body : fuite possible de données personnelles."
+    pattern-either:
+      - pattern: console.log(req.body)
+      - pattern: console.log(..., req.body, ...)
