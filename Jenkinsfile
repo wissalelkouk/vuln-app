@@ -58,7 +58,7 @@ pipeline {
           docker run --rm -v trivy-cache:/root/.cache/ \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "$PWD/reports:/reports" aquasec/trivy:latest image \
-            --skip-version-check --scanners vuln --no-progress \
+            --skip-db-update --skip-java-db-update --skip-version-check --scanners vuln --no-progress \
             --severity CRITICAL --exit-code 1 --ignore-unfixed \
             --format json --output /reports/trivy-image.json vuln-app:${BUILD_NUMBER}
         '''
